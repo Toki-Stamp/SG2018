@@ -63,13 +63,16 @@ public class SheetsQuickstart {
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         final String spreadsheetId = "1ETeswIr2RQb06lYlhqWDCa8cb0ugaSKDvG8-GzEE46s";
         final String range = "Ответы на форму (1)!A:CO";
+
         Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
         ValueRange response = service.spreadsheets().values()
                 .get(spreadsheetId, range)
                 .execute();
+
         List<List<Object>> values = response.getValues();
+
         if (values == null || values.isEmpty()) {
             System.out.println("No data found!");
         } else {
