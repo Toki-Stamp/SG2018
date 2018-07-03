@@ -5,7 +5,7 @@ package entity.type;
  * Contact me at : toki.stamp@gmail.com
  */
 
-public enum FacilityPreferencesType {
+public enum PreferencesType {
     LIVING_BUILDING,
     SUMMER_HOUSE,
     DOES_NOT_MATTER;

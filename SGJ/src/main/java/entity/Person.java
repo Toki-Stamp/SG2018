@@ -1,23 +1,16 @@
 package entity;
 
+import java.util.List;
+
 /**
  * Created by Fomichev Yuri on 30.06.2018
  * Contact me at : toki.stamp@gmail.com
  */
 
 public class Person {
-    private int id;
     private String nickName;
     private String nameAndSurname;
-    private String phoneNumber;
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
+    private List<String> phoneNumbers;
 
     public String getNickName() {
         return nickName;
@@ -35,11 +28,11 @@ public class Person {
         this.nameAndSurname = nameAndSurname;
     }
 
-    public String getPhoneNumber() {
-        return phoneNumber;
+    public List<String> getPhoneNumbers() {
+        return phoneNumbers;
     }
 
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+    public void setPhoneNumbers(List<String> phoneNumbers) {
+        this.phoneNumbers = phoneNumbers;
     }
 }

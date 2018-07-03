@@ -1,7 +1,7 @@
 package entity;
 
 import entity.type.AccommodationType;
-import entity.type.FacilityPreferencesType;
+import entity.type.PreferencesType;
 
 /**
  * Created by Fomichev Yuri on 30.06.2018
@@ -9,10 +9,24 @@ import entity.type.FacilityPreferencesType;
  */
 
 public class Accommodation {
-    /* Проживание на с пятницы на субботу */
-    AccommodationType fromFridayToSaturday;
-    /* Проживание на с субботы на воскресенье */
-    AccommodationType fromSaturdayToSunday;
+    /* Проживание с пятницы на субботу / с субботы на воскресенье */
+    AccommodationType accommodationType;
     /* Предпочтение на размещение */
-    FacilityPreferencesType preferences;
+    PreferencesType preferences;
+
+    public AccommodationType getAccommodationType() {
+        return accommodationType;
+    }
+
+    public void setAccommodationType(AccommodationType accommodationType) {
+        this.accommodationType = accommodationType;
+    }
+
+    public PreferencesType getPreferences() {
+        return preferences;
+    }
+
+    public void setPreferences(PreferencesType preferences) {
+        this.preferences = preferences;
+    }
 }

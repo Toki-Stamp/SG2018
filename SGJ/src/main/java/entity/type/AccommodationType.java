@@ -6,6 +6,8 @@ package entity.type;
  */
 
 public enum AccommodationType {
-    REQUIRED,
+    FROM_FRIDAY_TO_SATURDAY,
+    FROM_SATURDAY_TO_SUNDAY,
+    FULL_ACCOMMODATION,
     NOT_REQUIRED;
 }

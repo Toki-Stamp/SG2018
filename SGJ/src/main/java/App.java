@@ -1,9 +1,8 @@
-import com.google.api.services.sheets.v4.Sheets;
-import com.google.api.services.sheets.v4.model.ValueRange;
-import service.google.GoogleSheetsService;
+import entity.Application;
+import service.GoogleService;
+import service.ApplicationsService;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
+import java.util.List;
 
 /**
  * Created by Fomichev Yuri on 30.06.2018
@@ -11,13 +10,8 @@ import java.security.GeneralSecurityException;
  */
 
 public class App {
-    public static void main(String[] args) throws IOException, GeneralSecurityException {
-        Sheets service = GoogleSheetsService.getSheetsService();
-        final String spreadsheetId = "1ETeswIr2RQb06lYlhqWDCa8cb0ugaSKDvG8-GzEE46s";
-        final String range = "Ответы на форму (1)!A:CO";
-
-        ValueRange response = service.spreadsheets().values()
-                .get(spreadsheetId, range)
-                .execute();
+    public static void main(String[] args) {
+        List rawData = GoogleService.getRawData();
+        List<Application> applications = ApplicationsService.getApplications(rawData);
     }
 }

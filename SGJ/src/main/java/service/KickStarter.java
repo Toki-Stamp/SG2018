@@ -1,5 +1,7 @@
 package service;
 
+import entity.*;
+import entity.type.ApplicationType;
 import entity.type.TransportationType;
 
 import java.util.Arrays;
@@ -11,6 +13,10 @@ import java.util.Arrays;
 
 public class KickStarter {
     public static void main(String[] args) {
+
+    }
+
+    private void stuff() {
         TransportationType passenger = TransportationType.PASSENGER;
         TransportationType driver = TransportationType.DRIVER;
 

@@ -6,6 +6,6 @@ package entity.type;
  */
 
 public enum ApplicationType {
-    INDIVIDUAL,
-    GROUP;
+    INDIVIDUAL_APPLICATION,
+    GROUP_APPLICATION;
 }
