@@ -6,44 +6,101 @@ import entity.type.*;
 import java.util.*;
 
 public class ApplicationsService {
-    public static List<Application> getApplications(List<List<String>> rawData) {
-        List<Application> result = new ArrayList<>();
+    private final static Map<Integer, List<Integer>> PERSON_RULE = new HashMap<>();
+    private final static Map<Integer, List<Integer>> FOOD_RULE = new HashMap<>();
+    private final static Map<Integer, List<Integer>> ALCOHOL_RULE = new HashMap<>();
+    private final static Map<Integer, List<Integer>> ACCOMMODATION_RULE = new HashMap<>();
 
-        for (List<String> record : rawData) {
-            Map rule = ApplicationsService.getRule(record);
+    static {
+        PERSON_RULE.put(0, Arrays.asList(2, 3, 4));
+        PERSON_RULE.put(1, Arrays.asList(5, 6, 7));
+        PERSON_RULE.put(2, Arrays.asList(null, 15, 16));
+        PERSON_RULE.put(3, Arrays.asList(null, 13, 14));
+        PERSON_RULE.put(4, Arrays.asList(null, 11, 12));
+        PERSON_RULE.put(5, Arrays.asList(null, 9, 10));
 
-            switch ((ApplicationType) rule.get("ApplicationType")) {
-                case INDIVIDUAL_APPLICATION:
-                    result.add(ApplicationsService.completeApplication(record, rule, null));
-                    break;
-                case GROUP_APPLICATION:
-                    for (int i = 0, size = ((List<Integer>) rule.get("PersonList")).size(); i < size; i += 1) {
-                        result.add(ApplicationsService.completeApplication(record, rule, i));
-                    }
-                    break;
-            }
+        FOOD_RULE.put(0, Arrays.asList(28, 29, 30));
+        FOOD_RULE.put(null, Arrays.asList(37, 38, 39));
+        FOOD_RULE.put(1, Arrays.asList(46, 47, 48));
+        FOOD_RULE.put(2, Arrays.asList(83, 84, 85));
+        FOOD_RULE.put(3, Arrays.asList(74, 75, 76));
+        FOOD_RULE.put(4, Arrays.asList(65, 66, 67));
+        FOOD_RULE.put(5, Arrays.asList(56, 57, 58));
+    }
+
+    public static List<Application> getApplications(List data) {
+        List<Application> store = new ArrayList<>();
+        int index = 0;
+
+        for (List<String> record : (List<List<String>>) data) {
+            Integer size = getGroupSize(record.get(8));
+            store = ApplicationsService.extractApplications(record, size, store, (size > 0));
+            index++;
+        }
+
+        System.out.println(store);
+        return store;
+    }
+
+    private static List<Application> extractApplications(List<String> record, Integer size, List<Application> store, boolean group) {
+        Application application = new Application(record);
+        /* условие выхода из рекурсии */
+        if (group && size == 0) {
+            return store;
+        } else if (size > 0) {
+            /* рекурсивно углубляемся */
+            ApplicationsService.extractApplications(record, size - 1, store, true);
+            /* собираем объект по определённым правилам */
+            application.setPerson(ApplicationsService.completePerson(record, PERSON_RULE.get(size)));
+            application.setProvision(ApplicationsService.completeProvision(record, FOOD_RULE.get(size)));
+        } else if (!group) {
+            /* собираем объект по определённым правилам */
+            application.setPerson(ApplicationsService.completePerson(record, PERSON_RULE.get(0)));
+            application.setProvision(ApplicationsService.completeProvision(record, FOOD_RULE.get(0)));
+        }
+        /* добавляем объект к коллекции */
+        store.add(application);
+        return store;
+    }
+
+    private static Integer getGroupSize(String participants) {
+        Integer result = 0;
+
+        if (participants.contains("2")) {
+            result = 2;
+        } else if (participants.contains("3")) {
+            result = 3;
+        } else if (participants.contains("4")) {
+            result = 4;
+        } else if (participants.contains("5")) {
+            result = 5;
         }
 
         return result;
     }
 
     /* complete */
+
+    private static Person completePerson(List<String> record, List<Integer> indexes) {
+        Person person = new Person();
+
+        person.setNickName(indexes.get(0) != null ? record.get(indexes.get(0)) : "Гость " + record.get(5));
+        person.setNameAndSurname(record.get(indexes.get(1)).isEmpty() ? "Аноним" : record.get(indexes.get(1)));
+        person.setPhoneNumbers(record.get(indexes.get(2)).isEmpty() ? null : ApplicationsService.getPhoneNumbers(record.get(indexes.get(2))));
+
+        return person;
+    }
+
+    private static Provision completeProvision(List<String> record, List<Integer> indexes) {
+        return null;
+    }
+
     private static Application completeApplication(List<String> record, Map<String, Object> rule, Integer index) {
-        Application application = new Application();
+        Application application = new Application(record);
 
         application.setPerson(ApplicationsService.completePerson(record, ((List<List<Integer>>) rule.get("PersonList")).get(index != null ? index : 0)));
 
         return application;
-    }
-
-    private static Person completePerson(List<String> record, List<Integer> list) {
-        Person person = new Person();
-
-        person.setNickName(record.get(list.get(0)));
-        person.setNameAndSurname(record.get(list.get(1)));
-        person.setPhoneNumbers(ApplicationsService.getPhoneNumbers(record.get(list.get(2))));
-
-        return person;
     }
 
     private static Transportation completeTransportation(List<String> row, Application application) {
@@ -68,7 +125,7 @@ public class ApplicationsService {
         return transportation;
     }
 
-    private static Provision completeProvision(List<String> row, Application application) {
+    private static Provision completeProvision_old(List<String> row, Application application) {
         Provision provision = new Provision();
 
         switch (application.getProvisionType()) {
@@ -105,6 +162,27 @@ public class ApplicationsService {
                 break;
             case GROUP_APPLICATION:
                 break;
+        }
+
+        return result;
+    }
+
+    public static List<Application> getApplications_old(List<List<String>> rawData) {
+        List<Application> result = new ArrayList<>();
+
+        for (List<String> record : rawData) {
+            Map rule = ApplicationsService.getRule(record);
+
+            switch ((ApplicationType) rule.get("ApplicationType")) {
+                case INDIVIDUAL_APPLICATION:
+                    result.add(ApplicationsService.completeApplication(record, rule, null));
+                    break;
+                case GROUP_APPLICATION:
+                    for (int i = 0, size = ((List<Integer>) rule.get("PersonList")).size(); i < size; i += 1) {
+                        result.add(ApplicationsService.completeApplication(record, rule, i));
+                    }
+                    break;
+            }
         }
 
         return result;

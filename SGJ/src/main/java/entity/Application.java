@@ -4,20 +4,19 @@ import entity.type.ApplicationType;
 import entity.type.ProvisionType;
 import entity.type.TransportationType;
 
+import java.util.List;
+
 /**
  * Created by Fomichev Yuri on 29.06.2018
  * Contact me at : toki.stamp@gmail.com
  */
 
 public class Application {
-    private static int counter = 1;
-
-    public Application() {
-        this.id = counter++;
+    public Application(List<String> reference) {
+        this.reference = reference;
     }
 
-    /* Id */
-    private int id;
+    private List<String> reference;
     /* Тип заявки */
     private ApplicationType applicationType;
     /* Персональные данные */
