@@ -6,50 +6,42 @@ import entity.type.*;
 import java.util.*;
 
 public class ApplicationsService {
-    public static List<Application> getApplications(List rawData) {
+    public static List<Application> getApplications(List<List<String>> rawData) {
         List<Application> result = new ArrayList<>();
 
-        for (List<String> record : (List<List<String>>) rawData) {
-            List<Application> applications = new ArrayList<>();
-            Map<String, Integer> rule = ApplicationsService.getRule(record);
-            ApplicationType applicationType = ApplicationsService.getApplicationType(rule.get(""));
+        for (List<String> record : rawData) {
+            Map rule = ApplicationsService.getRule(record);
 
-            switch (applicationType) {
+            switch ((ApplicationType) rule.get("ApplicationType")) {
                 case INDIVIDUAL_APPLICATION:
-                    applications.add(ApplicationsService.completeApplication(record));
+                    result.add(ApplicationsService.completeApplication(record, rule, null));
                     break;
                 case GROUP_APPLICATION:
-
+                    for (int i = 0, size = ((List<Integer>) rule.get("PersonList")).size(); i < size; i += 1) {
+                        result.add(ApplicationsService.completeApplication(record, rule, i));
+                    }
                     break;
             }
-
-            result.addAll(applications);
         }
 
         return result;
     }
 
-    private static Map<String, Integer> getRule(List<String> record) {
-        Map<String, Integer> result = new HashMap<>();
-        result.put("Type", 1);
-        result.put("Participants", 8);
-
-        return result;
-    }
-
     /* complete */
-    private static Application completeApplication(List<String> record) {
-        Application result = null;
+    private static Application completeApplication(List<String> record, Map<String, Object> rule, Integer index) {
+        Application application = new Application();
 
-        return result;
+        application.setPerson(ApplicationsService.completePerson(record, ((List<List<Integer>>) rule.get("PersonList")).get(index != null ? index : 0)));
+
+        return application;
     }
 
-    private static Person completePerson(List<String> record, Application application) {
+    private static Person completePerson(List<String> record, List<Integer> list) {
         Person person = new Person();
 
-        person.setNickName(record.get(2));
-        person.setNameAndSurname(record.get(3));
-        person.setPhoneNumbers(ApplicationsService.getPhoneNumbers(record.get(4)));
+        person.setNickName(record.get(list.get(0)));
+        person.setNameAndSurname(record.get(list.get(1)));
+        person.setPhoneNumbers(ApplicationsService.getPhoneNumbers(record.get(list.get(2))));
 
         return person;
     }
@@ -119,6 +111,94 @@ public class ApplicationsService {
     }
 
     /* get */
+    private static Map getRule(List<String> record) {
+        Map<String, Object> rule = new LinkedHashMap<>();
+        List<List<Integer>> participantList = new ArrayList<>();
+        List<Map<String, List<Integer>>> supplyList = new ArrayList<>();
+
+        ApplicationType applicationType = ApplicationsService.getApplicationType(record.get(1));
+        ProvisionType provisionType = ApplicationsService.getProvisionType(record.get(27));
+
+        rule.put("ApplicationType", applicationType);
+
+        if (applicationType == ApplicationType.INDIVIDUAL_APPLICATION) {
+            participantList.add(Arrays.asList(2, 3, 4));
+        } else if (applicationType == ApplicationType.GROUP_APPLICATION) {
+            ParticipantsType participantsType = ApplicationsService.getParticipantsType(record.get(8));
+
+            rule.put("GroupParticipantsType", participantsType);
+
+            switch (participantsType) {
+                case FIVE_PARTICIPANTS:
+                    participantList.add(Arrays.asList(null, 9, 10));
+                case FOUR_PARTICIPANTS:
+                    participantList.add(Arrays.asList(null, 11, 12));
+                case THREE_PARTICIPANTS:
+                    participantList.add(Arrays.asList(null, 13, 14));
+                case TWO_PARTICIPANTS:
+                    participantList.add(Arrays.asList(null, 15, 16));
+                default:
+                    participantList.add(Arrays.asList(5, 6, 7));
+            }
+        }
+
+        rule.put("ProvisionType", provisionType);
+
+        if (provisionType == ProvisionType.INDIVIDUAL) {
+            Map<String, List<Integer>> supply = new LinkedHashMap<>();
+
+            supply.put("Food", Arrays.asList(28, 29, 30));
+            supply.put("Alcohol", Arrays.asList(31, 32, 33));
+            supply.put("Accommodation", Arrays.asList(34, 35));
+
+            supplyList.add(supply);
+        } else if (provisionType == ProvisionType.GROUP_COMMON) {
+            Map<String, List<Integer>> supply = new LinkedHashMap<>();
+
+            supply.put("Food", Arrays.asList(37, 38, 39));
+            supply.put("Alcohol", Arrays.asList(40, 41, 42));
+            supply.put("Accommodation", Arrays.asList(43, 44));
+
+            supplyList.add(supply);
+        } else if (provisionType == ProvisionType.GROUP_DIFFERENTIATED) {
+            ParticipantsType participantsType = ApplicationsService.getParticipantsType(record.get(55));
+            Map<String, List<Integer>> supply = new LinkedHashMap<>();
+
+            switch (participantsType) {
+                case FIVE_PARTICIPANTS:
+                    supply.put("Food", Arrays.asList(56, 57, 58));
+                    supply.put("Alcohol", Arrays.asList(59, 60, 61));
+                    supply.put("Accommodation", Arrays.asList(62, 63));
+                    supplyList.add(supply);
+                case FOUR_PARTICIPANTS:
+                    supply.put("Food", Arrays.asList(65, 66, 67));
+                    supply.put("Alcohol", Arrays.asList(68, 69, 70));
+                    supply.put("Accommodation", Arrays.asList(71, 72));
+                    supplyList.add(supply);
+                case THREE_PARTICIPANTS:
+                    supply.put("Food", Arrays.asList(74, 75, 76));
+                    supply.put("Alcohol", Arrays.asList(77, 78, 79));
+                    supply.put("Accommodation", Arrays.asList(80, 81));
+                    supplyList.add(supply);
+                case TWO_PARTICIPANTS:
+                    supply.put("Food", Arrays.asList(83, 84, 85));
+                    supply.put("Alcohol", Arrays.asList(86, 87, 88));
+                    supply.put("Accommodation", Arrays.asList(89, 90));
+                    supplyList.add(supply);
+                default:
+                    supply.put("Food", Arrays.asList(46, 47, 48));
+                    supply.put("Alcohol", Arrays.asList(49, 50, 51));
+                    supply.put("Accommodation", Arrays.asList(52, 53));
+                    supplyList.add(supply);
+            }
+        }
+
+        rule.put("PersonList", participantList);
+        rule.put("ProvisionList", supplyList);
+
+        return rule;
+    }
+
     private static ApplicationType getApplicationType(String applicationType) {
         ApplicationType result = null;
 
@@ -233,35 +313,17 @@ public class ApplicationsService {
         return result;
     }
 
-    private static List<String> getPhoneNumbers(String rawPhoneNumberData) {
-        String[] rawData = rawPhoneNumberData.replaceAll("[^0-9+]", "").split("\\D");
-        List<String> phoneNumbers = new ArrayList<>();
+    private static List getPhoneNumbers(String phoneNumbers) {
+        List<String> result = new ArrayList<>();
+        String[] rawData = phoneNumbers.replaceAll("[^0-9+]", "").split("\\D");
 
         for (String s : rawData) {
             if (s.length() > 0) {
                 String phoneNumber = "(" + s.substring(s.length() - 9, s.length() - 7) + ") " +
                         s.substring(s.length() - 7, s.length() - 4) + "-" + s.substring(s.length() - 4, s.length());
 
-                phoneNumbers.add(phoneNumber);
+                result.add(phoneNumber);
             }
-        }
-
-        return phoneNumbers;
-    }
-
-    private static Integer getIntValue(String string) {
-        Integer result = 1;
-
-        if (string.contains("нет")) {
-            result = null;
-        } else if (string.contains("2")) {
-            result = 2;
-        } else if (string.contains("3")) {
-            result = 3;
-        } else if (string.contains("4")) {
-            result = 4;
-        } else if (string.contains("5")) {
-            result = 5;
         }
 
         return result;
