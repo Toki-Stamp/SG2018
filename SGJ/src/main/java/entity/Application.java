@@ -16,6 +16,7 @@ public class Application {
         this.reference = reference;
     }
 
+    private Integer groupId;
     private List<String> reference;
     /* Тип заявки */
     private ApplicationType applicationType;
@@ -25,10 +26,18 @@ public class Application {
     private TransportationType transportationType;
     private Transportation transportation;
     /* Обеспечение продуктами питания и алкогольными напитками */
-    private ProvisionType provisionType;
+
     private Provision provision;
     /* Размещение и проживание */
     private Accommodation accommodation;
+
+    public Integer getGroupId() {
+        return groupId;
+    }
+
+    public void setGroupId(Integer groupId) {
+        this.groupId = groupId;
+    }
 
     public ApplicationType getApplicationType() {
         return applicationType;
@@ -62,13 +71,6 @@ public class Application {
         this.transportation = transportation;
     }
 
-    public ProvisionType getProvisionType() {
-        return provisionType;
-    }
-
-    public void setProvisionType(ProvisionType provisionType) {
-        this.provisionType = provisionType;
-    }
 
     public Provision getProvision() {
         return provision;

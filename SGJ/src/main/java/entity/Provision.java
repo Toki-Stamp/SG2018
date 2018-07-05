@@ -11,6 +11,15 @@ import java.util.List;
  */
 
 public class Provision {
+    public Provision(ProvisionType provisionType) {
+        this.provisionType = provisionType;
+    }
+
+    public Provision() {
+        this.provisionType = null;
+    }
+
+    private ProvisionType provisionType;
     /* Обеспечение продуктами питания */
     private SupplyType foodOnFriday;
     private SupplyType foodOnSaturday;
@@ -19,6 +28,10 @@ public class Provision {
     private SupplyType alcoholOnFriday;
     private SupplyType alcoholOnSaturday;
     private SupplyType alcoholOnSunday;
+
+    public ProvisionType getProvisionType() {
+        return provisionType;
+    }
 
     public SupplyType getFoodOnFriday() {
         return foodOnFriday;

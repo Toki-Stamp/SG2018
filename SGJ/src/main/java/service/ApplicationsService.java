@@ -11,6 +11,7 @@ public class ApplicationsService {
     private final static Map<Integer, List<Integer>> ALCOHOL_RULE = new HashMap<>();
     private final static Map<Integer, List<Integer>> ACCOMMODATION_RULE = new HashMap<>();
 
+    /* секция как бы before */
     static {
         PERSON_RULE.put(0, Arrays.asList(2, 3, 4));
         PERSON_RULE.put(1, Arrays.asList(5, 6, 7));
@@ -19,8 +20,8 @@ public class ApplicationsService {
         PERSON_RULE.put(4, Arrays.asList(null, 11, 12));
         PERSON_RULE.put(5, Arrays.asList(null, 9, 10));
 
-        FOOD_RULE.put(0, Arrays.asList(28, 29, 30));
-        FOOD_RULE.put(null, Arrays.asList(37, 38, 39));
+        FOOD_RULE.put(null, Arrays.asList(28, 29, 30));
+        FOOD_RULE.put(0, Arrays.asList(37, 38, 39));
         FOOD_RULE.put(1, Arrays.asList(46, 47, 48));
         FOOD_RULE.put(2, Arrays.asList(83, 84, 85));
         FOOD_RULE.put(3, Arrays.asList(74, 75, 76));
@@ -30,41 +31,52 @@ public class ApplicationsService {
 
     public static List<Application> getApplications(List data) {
         List<Application> store = new ArrayList<>();
-        int index = 0;
+        int groupId = 0;
+        boolean isGroup = false;
 
         for (List<String> record : (List<List<String>>) data) {
-            Integer size = getGroupSize(record.get(8));
-            store = ApplicationsService.extractApplications(record, size, store, (size > 0));
-            index++;
+            int groupSize = getGroupSize(record.get(8));
+            ProvisionType type = ApplicationsService.getProvisionType(record.get(27));
+
+            if (groupSize > 0) {
+                isGroup = true;
+                ++groupId;
+            } else if (isGroup) {
+                isGroup = false;
+            }
+
+            store = ApplicationsService.extractApplications(store, record, isGroup, groupSize, groupId, type);
         }
 
-        System.out.println(store);
         return store;
     }
 
-    private static List<Application> extractApplications(List<String> record, Integer size, List<Application> store, boolean group) {
+    private static List<Application> extractApplications(List<Application> store, List<String> record, boolean isGroup, int groupSize, int groupId) {
         Application application = new Application(record);
+        //todo здесь определить правило по провизии
         /* условие выхода из рекурсии */
-        if (group && size == 0) {
+        if (isGroup && (groupSize == 0)) {
             return store;
-        } else if (size > 0) {
+        } else if (groupSize > 0) {
             /* рекурсивно углубляемся */
-            ApplicationsService.extractApplications(record, size - 1, store, true);
-            /* собираем объект по определённым правилам */
-            application.setPerson(ApplicationsService.completePerson(record, PERSON_RULE.get(size)));
-            application.setProvision(ApplicationsService.completeProvision(record, FOOD_RULE.get(size)));
-        } else if (!group) {
-            /* собираем объект по определённым правилам */
-            application.setPerson(ApplicationsService.completePerson(record, PERSON_RULE.get(0)));
-            application.setProvision(ApplicationsService.completeProvision(record, FOOD_RULE.get(0)));
+            ApplicationsService.extractApplications(store, record, isGroup, groupSize - 1, groupId);
+            /* собираем объект */
+            application.setGroupId(groupId);
+            application.setPerson(ApplicationsService.completePerson(record, true, groupSize));
+            application.setProvision(ApplicationsService.completeProvision(record));
+        } else if (!isGroup) {
+            /* собираем объект */
+            application.setPerson(ApplicationsService.completePerson(record, false, groupSize));
+            application.setProvision(ApplicationsService.completeProvision(record));
         }
         /* добавляем объект к коллекции */
         store.add(application);
+
         return store;
     }
 
-    private static Integer getGroupSize(String participants) {
-        Integer result = 0;
+    private static int getGroupSize(String participants) {
+        int result = 0;
 
         if (participants.contains("2")) {
             result = 2;
@@ -81,26 +93,29 @@ public class ApplicationsService {
 
     /* complete */
 
-    private static Person completePerson(List<String> record, List<Integer> indexes) {
+    private static Person completePerson(List<String> record, boolean isGroup, int groupSize) {
         Person person = new Person();
+        List<Integer> rule;
 
-        person.setNickName(indexes.get(0) != null ? record.get(indexes.get(0)) : "Гость " + record.get(5));
-        person.setNameAndSurname(record.get(indexes.get(1)).isEmpty() ? "Аноним" : record.get(indexes.get(1)));
-        person.setPhoneNumbers(record.get(indexes.get(2)).isEmpty() ? null : ApplicationsService.getPhoneNumbers(record.get(indexes.get(2))));
+        /* определяем правило сбора данных */
+        if (isGroup) {
+            rule = PERSON_RULE.get(groupSize);
+        } else {
+            rule = PERSON_RULE.get(0);
+        }
+
+        person.setNickName(rule.get(0) != null ? record.get(rule.get(0)) : "Гость " + record.get(5));
+        person.setNameAndSurname(record.get(rule.get(1)).isEmpty() ? "Аноним" : record.get(rule.get(1)));
+        person.setPhoneNumbers(record.get(rule.get(2)).isEmpty() ? null : ApplicationsService.getPhoneNumbers(record.get(rule.get(2))));
 
         return person;
     }
 
-    private static Provision completeProvision(List<String> record, List<Integer> indexes) {
-        return null;
-    }
+    private static Provision completeProvision(List<String> record, ProvisionType type, Integer groupSize) {
+        Provision provision = new Provision(type);
+        List<Integer> rule = FOOD_RULE.get(groupSize);
 
-    private static Application completeApplication(List<String> record, Map<String, Object> rule, Integer index) {
-        Application application = new Application(record);
-
-        application.setPerson(ApplicationsService.completePerson(record, ((List<List<Integer>>) rule.get("PersonList")).get(index != null ? index : 0)));
-
-        return application;
+        return provision;
     }
 
     private static Transportation completeTransportation(List<String> row, Application application) {
@@ -128,7 +143,7 @@ public class ApplicationsService {
     private static Provision completeProvision_old(List<String> row, Application application) {
         Provision provision = new Provision();
 
-        switch (application.getProvisionType()) {
+        switch (provision.getProvisionType()) {
             case INDIVIDUAL:
                 provision.setFoodOnFriday(ApplicationsService.getSupplyType(row.get(28)));
                 provision.setFoodOnSaturday(ApplicationsService.getSupplyType(row.get(29)));
@@ -162,27 +177,6 @@ public class ApplicationsService {
                 break;
             case GROUP_APPLICATION:
                 break;
-        }
-
-        return result;
-    }
-
-    public static List<Application> getApplications_old(List<List<String>> rawData) {
-        List<Application> result = new ArrayList<>();
-
-        for (List<String> record : rawData) {
-            Map rule = ApplicationsService.getRule(record);
-
-            switch ((ApplicationType) rule.get("ApplicationType")) {
-                case INDIVIDUAL_APPLICATION:
-                    result.add(ApplicationsService.completeApplication(record, rule, null));
-                    break;
-                case GROUP_APPLICATION:
-                    for (int i = 0, size = ((List<Integer>) rule.get("PersonList")).size(); i < size; i += 1) {
-                        result.add(ApplicationsService.completeApplication(record, rule, i));
-                    }
-                    break;
-            }
         }
 
         return result;
