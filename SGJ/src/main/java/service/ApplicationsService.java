@@ -6,27 +6,39 @@ import entity.type.*;
 import java.util.*;
 
 public class ApplicationsService {
-    private final static Map<Integer, List<Integer>> PERSON_RULE = new HashMap<>();
-    private final static Map<Integer, List<Integer>> FOOD_RULE = new HashMap<>();
-    private final static Map<Integer, List<Integer>> ALCOHOL_RULE = new HashMap<>();
-    private final static Map<Integer, List<Integer>> ACCOMMODATION_RULE = new HashMap<>();
+    /* индексы главного правила */
+    /* 08 - количество участников группы? */
+    /* 17 - водитель или пассажир ? */
+    /* 27 - тип обеспечения и проживания? */
+    private final static List<Integer> RULE_GENERAL = Arrays.asList(8, 17, 27);
+    private final static Map<Integer, List<Integer>> RULE_PERSON = new HashMap<>();
+    private final static Map<Integer, List<Integer>> RULE_PROVISION = new HashMap<>();
+    private final static Map<Integer, List<Integer>> RULE_ACCOMMODATION = new HashMap<>();
 
-    /* секция как бы before */
     static {
-        PERSON_RULE.put(0, Arrays.asList(2, 3, 4));
-        PERSON_RULE.put(1, Arrays.asList(5, 6, 7));
-        PERSON_RULE.put(2, Arrays.asList(null, 15, 16));
-        PERSON_RULE.put(3, Arrays.asList(null, 13, 14));
-        PERSON_RULE.put(4, Arrays.asList(null, 11, 12));
-        PERSON_RULE.put(5, Arrays.asList(null, 9, 10));
-
-        FOOD_RULE.put(null, Arrays.asList(28, 29, 30));
-        FOOD_RULE.put(0, Arrays.asList(37, 38, 39));
-        FOOD_RULE.put(1, Arrays.asList(46, 47, 48));
-        FOOD_RULE.put(2, Arrays.asList(83, 84, 85));
-        FOOD_RULE.put(3, Arrays.asList(74, 75, 76));
-        FOOD_RULE.put(4, Arrays.asList(65, 66, 67));
-        FOOD_RULE.put(5, Arrays.asList(56, 57, 58));
+        /* индексы персональных данных */
+        RULE_PERSON.put(0, Arrays.asList(2, 3, 4));
+        RULE_PERSON.put(1, Arrays.asList(5, 6, 7));
+        RULE_PERSON.put(2, Arrays.asList(null, 15, 16));
+        RULE_PERSON.put(3, Arrays.asList(null, 13, 14));
+        RULE_PERSON.put(4, Arrays.asList(null, 11, 12));
+        RULE_PERSON.put(5, Arrays.asList(null, 9, 10));
+        /* индексы данных по продуктам питания и алкоголным напиткам */
+        RULE_PROVISION.put(null, Arrays.asList(28, 29, 30, 31, 32, 33));
+        RULE_PROVISION.put(0, Arrays.asList(37, 38, 39, 40, 41, 42));
+        RULE_PROVISION.put(1, Arrays.asList(46, 47, 48, 49, 50, 51));
+        RULE_PROVISION.put(2, Arrays.asList(83, 84, 85, 86, 87, 88));
+        RULE_PROVISION.put(3, Arrays.asList(74, 75, 76, 77, 78, 79));
+        RULE_PROVISION.put(4, Arrays.asList(65, 66, 67, 68, 69, 70));
+        RULE_PROVISION.put(5, Arrays.asList(56, 57, 58, 59, 60, 61));
+        /* индексы данных по размещению и проживанию */
+        RULE_ACCOMMODATION.put(null, Arrays.asList(34, 35));
+        RULE_ACCOMMODATION.put(0, Arrays.asList(43, 44));
+        RULE_ACCOMMODATION.put(1, Arrays.asList(52, 53));
+        RULE_ACCOMMODATION.put(2, Arrays.asList(89, 90));
+        RULE_ACCOMMODATION.put(3, Arrays.asList(80, 81));
+        RULE_ACCOMMODATION.put(4, Arrays.asList(71, 72));
+        RULE_ACCOMMODATION.put(5, Arrays.asList(62, 63));
     }
 
     public static List<Application> getApplications(List data) {
@@ -35,8 +47,16 @@ public class ApplicationsService {
         boolean isGroup = false;
 
         for (List<String> record : (List<List<String>>) data) {
-            int groupSize = getGroupSize(record.get(8));
-            ProvisionType type = ApplicationsService.getProvisionType(record.get(27));
+            Integer provisionGroupSize = null;
+            Integer groupSize = getGroupSize(record.get(RULE_GENERAL.get(0)));
+            TransportationType transportationType = ApplicationsService.getTransportationType(record.get(RULE_GENERAL.get(1)));
+            ProvisionType provisionType = ApplicationsService.getProvisionType(record.get(RULE_GENERAL.get(2)));
+
+            if (provisionType == ProvisionType.GROUP_COMMON) {
+                provisionGroupSize = 0;
+            } else if (provisionType == ProvisionType.GROUP_DIFFERENTIATED) {
+                provisionGroupSize = getGroupSize(record.get(55));
+            }
 
             if (groupSize > 0) {
                 isGroup = true;
@@ -45,30 +65,37 @@ public class ApplicationsService {
                 isGroup = false;
             }
 
-            store = ApplicationsService.extractApplications(store, record, isGroup, groupSize, groupId, type);
+            store = ApplicationsService.extractApplications(store, record, isGroup, groupSize, groupId, provisionType, provisionGroupSize);
         }
 
         return store;
     }
 
-    private static List<Application> extractApplications(List<Application> store, List<String> record, boolean isGroup, int groupSize, int groupId) {
+    private static List<Application> extractApplications(List<Application> store, List<String> record, boolean isGroup, int groupSize, int groupId, ProvisionType provisionType, Integer provisionGroupSize) {
         Application application = new Application(record);
-        //todo здесь определить правило по провизии
         /* условие выхода из рекурсии */
         if (isGroup && (groupSize == 0)) {
             return store;
         } else if (groupSize > 0) {
             /* рекурсивно углубляемся */
-            ApplicationsService.extractApplications(store, record, isGroup, groupSize - 1, groupId);
+            ApplicationsService.extractApplications(
+                    store, record, isGroup, groupSize - 1, groupId, provisionType,
+                    (provisionType == ProvisionType.GROUP_DIFFERENTIATED) ? (provisionGroupSize - 1) : provisionGroupSize
+            );
             /* собираем объект */
             application.setGroupId(groupId);
             application.setPerson(ApplicationsService.completePerson(record, true, groupSize));
-            application.setProvision(ApplicationsService.completeProvision(record));
+//            application.setProvision(ApplicationsService.completeProvision(record, provisionType, provisionGroupSize));
+//            application.setAccommodation(ApplicationsService.completeAccommodation(record, provisionGroupSize));
         } else if (!isGroup) {
             /* собираем объект */
             application.setPerson(ApplicationsService.completePerson(record, false, groupSize));
-            application.setProvision(ApplicationsService.completeProvision(record));
+//            application.setProvision(ApplicationsService.completeProvision(record, provisionType, provisionGroupSize));
+//            application.setAccommodation(ApplicationsService.completeAccommodation(record, provisionGroupSize));
         }
+        /* собираем объект */
+        application.setProvision(ApplicationsService.completeProvision(record, provisionType, provisionGroupSize));
+        application.setAccommodation(ApplicationsService.completeAccommodation(record, provisionGroupSize));
         /* добавляем объект к коллекции */
         store.add(application);
 
@@ -96,14 +123,13 @@ public class ApplicationsService {
     private static Person completePerson(List<String> record, boolean isGroup, int groupSize) {
         Person person = new Person();
         List<Integer> rule;
-
         /* определяем правило сбора данных */
         if (isGroup) {
-            rule = PERSON_RULE.get(groupSize);
+            rule = RULE_PERSON.get(groupSize);
         } else {
-            rule = PERSON_RULE.get(0);
+            rule = RULE_PERSON.get(0);
         }
-
+        /* заполняем сущность */
         person.setNickName(rule.get(0) != null ? record.get(rule.get(0)) : "Гость " + record.get(5));
         person.setNameAndSurname(record.get(rule.get(1)).isEmpty() ? "Аноним" : record.get(rule.get(1)));
         person.setPhoneNumbers(record.get(rule.get(2)).isEmpty() ? null : ApplicationsService.getPhoneNumbers(record.get(rule.get(2))));
@@ -111,75 +137,30 @@ public class ApplicationsService {
         return person;
     }
 
-    private static Provision completeProvision(List<String> record, ProvisionType type, Integer groupSize) {
-        Provision provision = new Provision(type);
-        List<Integer> rule = FOOD_RULE.get(groupSize);
+    private static Provision completeProvision(List<String> record, ProvisionType provisionType, Integer provisionGroupSize) {
+        Provision provision = new Provision(provisionType);
+        /* определяем правило сбора данных */
+        List<Integer> rule = RULE_PROVISION.get(provisionGroupSize);
+        /* заполняем сущность */
+        provision.setFoodOnFriday(ApplicationsService.getSupplyType(record.get(rule.get(0))));
+        provision.setFoodOnSaturday(ApplicationsService.getSupplyType(record.get(rule.get(1))));
+        provision.setFoodOnSunday(ApplicationsService.getSupplyType(record.get(rule.get(2))));
+        provision.setAlcoholOnFriday(ApplicationsService.getSupplyType(record.get(rule.get(3))));
+        provision.setAlcoholOnSaturday(ApplicationsService.getSupplyType(record.get(rule.get(4))));
+        provision.setAlcoholOnSunday(ApplicationsService.getSupplyType(record.get(rule.get(5))));
 
         return provision;
     }
 
-    private static Transportation completeTransportation(List<String> row, Application application) {
-        Transportation transportation = new Transportation();
+    private static Accommodation completeAccommodation(List<String> record, Integer provisionGroupSize) {
+        Accommodation accommodation = new Accommodation();
+        /* определяем правило сбора данных */
+        List<Integer> rule = RULE_ACCOMMODATION.get(provisionGroupSize);
+        /* заполняем сущность */
+        accommodation.setAccommodationType(ApplicationsService.getAccommodationType(record.get(rule.get(0))));
+        accommodation.setPreferences(ApplicationsService.getPreferencesType(record.get(rule.get(1))));
 
-        switch (application.getTransportationType()) {
-            case DRIVER:
-                transportation.setCity(row.get(18));
-                transportation.setDepartureDay(ApplicationsService.getDepartureDay(row.get(19)));
-                transportation.setTime(row.get(20));
-                //todo заполнить пустые мест
-                transportation.setFreeSits(null);
-                break;
-            case PASSENGER:
-                transportation.setCity(row.get(23));
-                transportation.setDepartureDay(ApplicationsService.getDepartureDay(row.get(24)));
-                transportation.setTime(row.get(25));
-                transportation.setFreeSits(null);
-                break;
-        }
-
-        return transportation;
-    }
-
-    private static Provision completeProvision_old(List<String> row, Application application) {
-        Provision provision = new Provision();
-
-        switch (provision.getProvisionType()) {
-            case INDIVIDUAL:
-                provision.setFoodOnFriday(ApplicationsService.getSupplyType(row.get(28)));
-                provision.setFoodOnSaturday(ApplicationsService.getSupplyType(row.get(29)));
-                provision.setFoodOnSunday(ApplicationsService.getSupplyType(row.get(30)));
-                provision.setAlcoholOnFriday(ApplicationsService.getSupplyType(row.get(31)));
-                provision.setAlcoholOnSaturday(ApplicationsService.getSupplyType(row.get(32)));
-                provision.setAlcoholOnSunday(ApplicationsService.getSupplyType(row.get(33)));
-                break;
-            case GROUP_COMMON:
-                provision.setFoodOnFriday(ApplicationsService.getSupplyType(row.get(37)));
-                provision.setFoodOnSaturday(ApplicationsService.getSupplyType(row.get(38)));
-                provision.setFoodOnSunday(ApplicationsService.getSupplyType(row.get(39)));
-                provision.setAlcoholOnFriday(ApplicationsService.getSupplyType(row.get(40)));
-                provision.setAlcoholOnSaturday(ApplicationsService.getSupplyType(row.get(41)));
-                provision.setAlcoholOnSunday(ApplicationsService.getSupplyType(row.get(42)));
-                break;
-            case GROUP_DIFFERENTIATED:
-                break;
-        }
-
-        return provision;
-    }
-
-    private static Accommodation completeAccommodation(List<String> row, Application reference) {
-        Accommodation result = new Accommodation();
-
-        switch (reference.getApplicationType()) {
-            case INDIVIDUAL_APPLICATION:
-                result.setAccommodationType(ApplicationsService.getAccommodationType(row.get(34)));
-                result.setPreferences(ApplicationsService.getPreferencesType(row.get(35)));
-                break;
-            case GROUP_APPLICATION:
-                break;
-        }
-
-        return result;
+        return accommodation;
     }
 
     /* get */
@@ -345,15 +326,15 @@ public class ApplicationsService {
         return result;
     }
 
-    private static DepartureType getDepartureDay(String departureDay) {
-        DepartureType result = null;
+    private static DepartureDayType getDepartureDay(String departureDay) {
+        DepartureDayType result = null;
 
         if (departureDay.contains("Пятница")) {
-            result = DepartureType.FRIDAY;
+            result = DepartureDayType.FRIDAY;
         } else if (departureDay.contains("Суббота")) {
-            result = DepartureType.SATURDAY;
+            result = DepartureDayType.SATURDAY;
         } else if (departureDay.contains("Воскресенье")) {
-            result = DepartureType.SUNDAY;
+            result = DepartureDayType.SUNDAY;
         }
 
         return result;

@@ -1,7 +1,8 @@
 package entity;
 
-import entity.type.DepartureType;
-import entity.type.SitsType;
+import entity.type.DepartureDayType;
+import entity.type.EmptySitsType;
+import entity.type.TransportationType;
 
 /**
  * Created by Fomichev Yuri on 30.06.2018
@@ -9,10 +10,19 @@ import entity.type.SitsType;
  */
 
 public class Transportation {
+    private TransportationType transportationType;
     private String city;
-    private DepartureType departureDay;
+    private DepartureDayType departureDay;
     private String time;
-    private SitsType freeSits;
+    private EmptySitsType emptySits;
+
+    public TransportationType getTransportationType() {
+        return transportationType;
+    }
+
+    public void setTransportationType(TransportationType transportationType) {
+        this.transportationType = transportationType;
+    }
 
     public String getCity() {
         return city;
@@ -22,11 +32,11 @@ public class Transportation {
         this.city = city;
     }
 
-    public DepartureType getDepartureDay() {
+    public DepartureDayType getDepartureDay() {
         return departureDay;
     }
 
-    public void setDepartureDay(DepartureType departureDay) {
+    public void setDepartureDay(DepartureDayType departureDay) {
         this.departureDay = departureDay;
     }
 
@@ -38,11 +48,11 @@ public class Transportation {
         this.time = time;
     }
 
-    public SitsType getFreeSits() {
-        return freeSits;
+    public EmptySitsType getEmptySits() {
+        return emptySits;
     }
 
-    public void setFreeSits(SitsType freeSits) {
-        this.freeSits = freeSits;
+    public void setEmptySits(EmptySitsType emptySits) {
+        this.emptySits = emptySits;
     }
 }

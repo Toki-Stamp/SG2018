@@ -19,11 +19,10 @@ public class Application {
     private Integer groupId;
     private List<String> reference;
     /* Тип заявки */
-    private ApplicationType applicationType;
+//    private ApplicationType applicationType;
     /* Персональные данные */
     private Person person;
     /* Транспортировка */
-    private TransportationType transportationType;
     private Transportation transportation;
     /* Обеспечение продуктами питания и алкогольными напитками */
 
@@ -39,13 +38,13 @@ public class Application {
         this.groupId = groupId;
     }
 
-    public ApplicationType getApplicationType() {
-        return applicationType;
-    }
+//    public ApplicationType getApplicationType() {
+//        return applicationType;
+//    }
 
-    public void setApplicationType(ApplicationType applicationType) {
-        this.applicationType = applicationType;
-    }
+//    public void setApplicationType(ApplicationType applicationType) {
+//        this.applicationType = applicationType;
+//    }
 
     public Person getPerson() {
         return person;
@@ -55,13 +54,7 @@ public class Application {
         this.person = person;
     }
 
-    public TransportationType getTransportationType() {
-        return transportationType;
-    }
 
-    public void setTransportationType(TransportationType transportationType) {
-        this.transportationType = transportationType;
-    }
 
     public Transportation getTransportation() {
         return transportation;
