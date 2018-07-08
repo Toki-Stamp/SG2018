@@ -1,8 +1,6 @@
 package entity;
 
 import entity.type.ApplicationType;
-import entity.type.ProvisionType;
-import entity.type.TransportationType;
 
 import java.util.List;
 
@@ -16,19 +14,27 @@ public class Application {
         this.reference = reference;
     }
 
-    private Integer groupId;
+    public Application(List<String> reference, ApplicationType applicationType) {
+        this(reference);
+        this.applicationType = applicationType;
+    }
+
+    //todo удалить по завершении
     private List<String> reference;
+
+    private Integer groupId;
     /* Тип заявки */
-//    private ApplicationType applicationType;
+    private ApplicationType applicationType;
     /* Персональные данные */
     private Person person;
     /* Транспортировка */
     private Transportation transportation;
     /* Обеспечение продуктами питания и алкогольными напитками */
-
     private Provision provision;
     /* Размещение и проживание */
     private Accommodation accommodation;
+    /* Дополнительная информация */
+    private Information information;
 
     public Integer getGroupId() {
         return groupId;
@@ -38,14 +44,6 @@ public class Application {
         this.groupId = groupId;
     }
 
-//    public ApplicationType getApplicationType() {
-//        return applicationType;
-//    }
-
-//    public void setApplicationType(ApplicationType applicationType) {
-//        this.applicationType = applicationType;
-//    }
-
     public Person getPerson() {
         return person;
     }
@@ -54,8 +52,6 @@ public class Application {
         this.person = person;
     }
 
-
-
     public Transportation getTransportation() {
         return transportation;
     }
@@ -63,7 +59,6 @@ public class Application {
     public void setTransportation(Transportation transportation) {
         this.transportation = transportation;
     }
-
 
     public Provision getProvision() {
         return provision;
@@ -79,5 +74,13 @@ public class Application {
 
     public void setAccommodation(Accommodation accommodation) {
         this.accommodation = accommodation;
+    }
+
+    public Information getInformation() {
+        return information;
+    }
+
+    public void setInformation(Information information) {
+        this.information = information;
     }
 }

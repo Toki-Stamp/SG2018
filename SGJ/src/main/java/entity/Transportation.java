@@ -16,6 +16,10 @@ public class Transportation {
     private String time;
     private EmptySitsType emptySits;
 
+    public Transportation(TransportationType transportationType) {
+        this.transportationType = transportationType;
+    }
+
     public TransportationType getTransportationType() {
         return transportationType;
     }

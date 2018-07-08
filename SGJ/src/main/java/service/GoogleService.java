@@ -27,7 +27,7 @@ public class GoogleService {
             final String apiKey = "AIzaSyBsyp4iwLdmz3wlKIXwspWjVzdoHXoYWko";
             final String applicationName = "Google Sheets Service";
             final String spreadsheetId = "1ETeswIr2RQb06lYlhqWDCa8cb0ugaSKDvG8-GzEE46s";
-            final String range = "Ответы на форму (1)!A:CO";
+            final String range = "Ответы на форму!A:CO";
 
             Sheets sheets = new Sheets
                     .Builder(httpTransport, jsonFactory, null)

@@ -13,5 +13,6 @@ public class App {
     public static void main(String[] args) {
         List data = GoogleService.getRawData();
         List<Application> applications = ApplicationsService.getApplications(data);
+        System.out.println(applications);
     }
 }
