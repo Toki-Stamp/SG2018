@@ -13,10 +13,10 @@ public class ApplicationsService {
     /* 27 - тип обеспечения и проживания */
     private final static List<Integer> RULE_GENERAL = Arrays.asList(1, 8, 17, 27);
     private final static Map<Integer, List<Integer>> RULE_PERSON = new HashMap<>();
+    private final static Map<TransportationType, List<Integer>> RULE_TRANSPORTATION = new HashMap<>();
     private final static Map<Integer, List<Integer>> RULE_PROVISION = new HashMap<>();
     private final static Map<Integer, List<Integer>> RULE_ACCOMMODATION = new HashMap<>();
     private final static Map<Object, Object> RULE_INFORMATION = new HashMap<>();
-    private final static Map<TransportationType, List<Integer>> RULE_TRANSPORTATION = new HashMap<>();
 
     static {
         /* индексы персональных данных */
@@ -56,7 +56,7 @@ public class ApplicationsService {
 
     private static class Options {
         ApplicationType applicationType;
-        boolean isGroup;
+        Boolean isGroup;
         Integer groupSize;
         Integer groupId;
         TransportationType transportationType;
@@ -79,7 +79,7 @@ public class ApplicationsService {
     }
 
     public static List<Application> getApplications(List<List<String>> data) {
-        List<Application> store = new ArrayList<>();
+        List<Application> applications = new ArrayList<>();
         int groupId = 1;
 
         for (List<String> record : data) {
@@ -98,17 +98,17 @@ public class ApplicationsService {
                 options.provisionGroupSize = getGroupSize(record.get(55));
             }
 
-            store = ApplicationsService.extractApplications(store, record, options);
+            applications = ApplicationsService.extractApplications(applications, record, options);
         }
 
-        return store;
+        return applications;
     }
 
-    private static List<Application> extractApplications(List<Application> store, List<String> record, Options options) {
-        Application application = new Application(record, options.applicationType);
+    private static List<Application> extractApplications(List<Application> applications, List<String> record, Options options) {
+        Application application = new Application(options.applicationType);
         /* условие выхода из рекурсии */
         if (options.isGroup && (options.groupSize == 0)) {
-            return store;
+            return applications;
         } else if (options.groupSize > 0) {
             /* подготавливаем новые параметры для рекурсивного вызова */
             Options recursiveOptions = new Options(
@@ -125,7 +125,7 @@ public class ApplicationsService {
                     )
             );
             /* рекурсивно углубляемся */
-            ApplicationsService.extractApplications(store, record, recursiveOptions);
+            ApplicationsService.extractApplications(applications, record, recursiveOptions);
         }
         /* собираем объект */
         application.setGroupId(options.groupId);
@@ -135,9 +135,9 @@ public class ApplicationsService {
         application.setAccommodation(ApplicationsService.completeAccommodation(record, options));
         application.setInformation(ApplicationsService.completeInformation(record, options));
         /* добавляем объект к коллекции */
-        store.add(application);
+        applications.add(application);
         /* возвращаем объект */
-        return store;
+        return applications;
     }
 
     /* complete */
@@ -228,36 +228,29 @@ public class ApplicationsService {
                             (Integer) RULE_INFORMATION.get(null)
                     );
                 } else {
-                    List<Integer> indexes = (List<Integer>) RULE_INFORMATION.get(options.provisionType);
-                    int theBigOne = indexes.get(options.groupSize - 1);
-                    int sd = ((List<Integer>) RULE_INFORMATION.get(options.provisionType)).get(options.groupSize - 1);
-                    String fdsaf = record.get(sd);
-
                     rule = Arrays.asList(
                             (Integer) RULE_INFORMATION.get(options.transportationType),
-                            ((List<Integer>) RULE_INFORMATION.get(options.provisionType)).get(indexes.get(options.groupSize - 1)),
+                            ((List<Integer>) RULE_INFORMATION.get(options.provisionType)).get(options.groupSize - 1),
                             (Integer) RULE_INFORMATION.get(null)
                     );
 
-                    System.out.println();
+                    hasError = false;
                 }
                 if (options.groupSize <= 1) {
                     if (!record.get(rule.get(0)).equals("")) {
                         information.setTransportationInfo(record.get(rule.get(0)));
                     }
-                    if (!record.get(rule.get(2)).equals("")) {
+                    if ((record.size() > rule.get(2)) && !record.get(rule.get(2)).equals("")) {
                         information.setOtherInfo(record.get(rule.get(2)));
                     }
                 }
-
-                information.setAccommodationInfo(record.get(rule.get(1)));
-                hasError = false;
-            } catch (IndexOutOfBoundsException e) {
-                e.printStackTrace();
-                hasError = false;
-                /* ignore */
+                if ((record.size() > rule.get(1)) && !record.get(rule.get(1)).equals("") && (
+                        (options.provisionType == ProvisionType.GROUP_DIFFERENTIATED) ||
+                                (options.provisionType == ProvisionType.INDIVIDUAL) ||
+                                (options.provisionType == ProvisionType.GROUP_COMMON && (options.groupSize <= 1)))) {
+                    information.setAccommodationInfo(record.get(rule.get(1)));
+                }
             } catch (ClassCastException e) {
-                e.printStackTrace();
                 hasError = true;
             }
         } while (hasError);
@@ -298,13 +291,17 @@ public class ApplicationsService {
         List<String> result = new ArrayList<>();
         String[] rawData = phoneNumbers.replaceAll("[^0-9+]", "").split("\\D");
 
-        for (String s : rawData) {
-            if (s.length() > 0) {
-                String phoneNumber = "(" + s.substring(s.length() - 9, s.length() - 7) + ") " +
-                        s.substring(s.length() - 7, s.length() - 4) + "-" + s.substring(s.length() - 4, s.length());
+        try {
+            for (String s : rawData) {
+                if (s.length() > 0) {
+                    String phoneNumber = "(" + s.substring(s.length() - 9, s.length() - 7) + ") " +
+                            s.substring(s.length() - 7, s.length() - 4) + "-" + s.substring(s.length() - 4, s.length());
 
-                result.add(phoneNumber);
+                    result.add(phoneNumber);
+                }
             }
+        } catch (StringIndexOutOfBoundsException e) {
+            result = null;
         }
 
         return result;

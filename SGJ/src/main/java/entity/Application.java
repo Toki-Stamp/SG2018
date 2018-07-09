@@ -10,17 +10,9 @@ import java.util.List;
  */
 
 public class Application {
-    public Application(List<String> reference) {
-        this.reference = reference;
-    }
-
-    public Application(List<String> reference, ApplicationType applicationType) {
-        this(reference);
+    public Application(ApplicationType applicationType) {
         this.applicationType = applicationType;
     }
-
-    //todo удалить по завершении
-    private List<String> reference;
 
     private Integer groupId;
     /* Тип заявки */
